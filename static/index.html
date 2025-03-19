@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Video BroadCaster</title>
+
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #333;
+                background-image: url('../static/wallhaven-4383gv.jpg');
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                background-size: cover;
+            }
+
+            button {
+                padding: 10px 20px;
+                border: none;
+                background: #007bff;
+                color: #fff;
+                cursor: pointer;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            button:hover {
+                background: #0056b3;
+            }
+
+            h1 {
+                color: #444;
+            }
+
+            .container {
+                width: 70%;
+                max-width: 750px;
+                padding: 20px;
+                border-radius: 10px;
+                background: #fff;
+                text-align: center;
+                position: relative;
+
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2),
+                            0 6px 6px rgba(0, 0, 0, 0.15);
+                            
+                border: 2px solid #e0e0e0;
+
+                background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            }
+
+            .controls {
+                display: flex;
+                justify-content: space-between;
+                margin : 20px 0;
+
+            }
+
+            .button, .inputs {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            
+            select, input[type=range], input[type=number] {
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+            }
+
+            #status {
+                margin-top: 20px;
+                padding: 10px;
+                border: 1px solid #ccc;
+                background: #e9ecef;
+                border-radius: 5px;
+            }
+
+        </style>
+        
+    </head>
+    
+    <body>
+        <div class="container">
+            <h1>Virtual Camera Controller</h1>
+            <div class="controls">
+
+                <div class="button">
+                    <button onclick="getDevices()">List Devices</button>
+                    <button onclick="startStream()">Start Devices</button>
+                    <button onclick="stopStream()">Stop Devices</button>
+                </div>
+                    
+                <div class="inputs">
+                    <label for="camera"> Choose Camera </label>
+                    <select id="camera"></select>
+
+                    <label for="fps"> FPS </label>
+                    <input id="fps" type="number" min="1" max="60" value="15">
+
+                    <label for="blur">Blur Strength (odd number)</label>
+                    <input id="blur" type="range" min="1" max="52" value="10">
+
+                    <label for="background"> Background </label>
+
+                    <select id="background">
+                        <option value="none"> No Background </option>
+                        <option value="blur"> Blur </option>
+                        <option value="default"> default </option>
+                    </select>
+
+                </div>
+            </div>
+            <div id="status"> Status : Waiting for action... </div>
+        </div>
+
+        <script>
+            function getDevices() {
+                fetch('/devices')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('camera');
+                    select.innerHTML = '';
+                    data.forEach(device => {
+                        select.innerHTML += `<option value="${device.id}">${device.name}</option>`;
+                    });
+
+                });
+
+            }
+        </script>
+    </body>
+
+</html>
