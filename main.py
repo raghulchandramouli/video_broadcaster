@@ -12,8 +12,10 @@ def serve_ui():
     return FileResponse("static/index.html")
 
 @app.get("/devices")
-def abc():
+def devices():
     pass
+    return 0
+
 
 
 if __name__ == "__main__":
