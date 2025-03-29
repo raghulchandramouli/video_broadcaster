@@ -135,6 +135,16 @@
                 });
 
             }
+
+            function startStream() {
+                const source = document.getElementById('camera').value;
+                const fps = document.getElementById('fps').value;
+                const blur = document.getElementById('blur').value;
+                const background = document.getElementById('background').value;
+
+                fetch(`/start?source=${source}&fps=${fps}&blur=${blur}&background=${background}`)
+                
+            }
         </script>
     </body>
 
