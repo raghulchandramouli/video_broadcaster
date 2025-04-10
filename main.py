@@ -46,6 +46,7 @@ def stop_stream():
 
 @app.get("/devices")
 def devices():
+    
     return streaming.list_available_devices()
 
 if __name__ == "__main__":

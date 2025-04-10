@@ -1,15 +1,21 @@
 import cv2
 import pyvirtualcam
+import torch
 
-class Streaming():
+from engine import CustomerSegmentationWithYolo
+
+class Streaming(CustomerSegmentationWithYolo):
     
     def __init__(self, in_source=None, out_source=None, fps=None, blur_strength=None, background="none"):
+        super().__init__()
+        
         self.input_source = in_source
         self.out_source = out_source
         self.fps = fps
         self.blur_strength = blur_strength
         self.background = background
-        self.running = False
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         
     
     def update_streaming_config(self, in_source=None, out_source=None, fps=None, blur_strength=None, background="none"):
@@ -58,9 +64,19 @@ class Streaming():
                     break
                 
                 if frame_idx % frame_interval == 0:
-                    result = 0 # Model Inference by cv model
-                    mask  = 0 # Segmentation mask
+                    self.model.predict(source=frame, save=False, save_txt=False, stream=False, retina_masks=True, verbose=False, device=self.device)
+                    mask = self.generate_mask_from_result(results)
                     
+                    if mask is not None:
+                        if self.background == "blur":
+                            self.apply_blur_with_mask(frame, mask, blur_strength=self.blur_strength)
+                            
+                        elif self.background == "none":
+                            result_frame = self.apply_black_background(frame, mask)
+                            
+                        elif self.background == "default":
+                            result_frame = self.apply_custom_background(frame, mask)
+                            
                     ### Process masks and create results:
                     result_frame = 0
                 
