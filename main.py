@@ -25,14 +25,16 @@ def start_stream(
 ):
     
     streaming.update_streaming_config(in_source=None, out_source=None, fps=None, blur_strength=None, background="none")
-    return 0
+    
+    if streaming.running:
+        return JSONResponse(content={"message" : "Streaming already running."}, status_code=400)
+    
+    streaming.stream_video()
+    return
 
 @app.get("/devices")
 def devices():
     return streaming.list_available_devices()
-
-def a(a, b, c, d):
-    pass
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

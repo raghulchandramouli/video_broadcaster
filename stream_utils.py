@@ -59,7 +59,8 @@ class Streaming():
                     
                     ### Process masks and create results:
                     result_frame = 0
-                    
+                
+                frmae_idx += 1 
                     
             cam.send(cv2.cv2Color(result_frame, cv2.COLOR_BGR2RGB))
             cam.sleep_until_next_frame()
