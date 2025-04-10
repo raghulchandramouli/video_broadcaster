@@ -6,7 +6,7 @@ from engine import CustomerSegmentationWithYolo
 
 class Streaming(CustomerSegmentationWithYolo):
     
-    def __init__(self, in_source=None, out_source=None, fps=None, blur_strength=None, background="none"):
+    def __init__(self, in_source=None, out_source=None, fps=None, blur_strength=None, cam_fps = 15, background="none"):
         super().__init__(erode_size=5, erode_intensity=2)
         
         self.input_source = in_source
@@ -14,6 +14,8 @@ class Streaming(CustomerSegmentationWithYolo):
         self.fps = fps
         self.blur_strength = blur_strength
         self.background = background
+        self.running = False
+        self.original_fps = cam_fps
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         
@@ -31,7 +33,17 @@ class Streaming(CustomerSegmentationWithYolo):
     
     def stream_video(self):
         self.running = True
-        cap = cv2.VideoCapture(int(self.input_source))
+        
+        # Check if input_source is None
+        if self.input_source is None:
+            print("Error: No camera source specified")
+            return
+            
+        try:
+            cap = cv2.VideoCapture(int(self.input_source))
+        except (ValueError, TypeError):
+            print(f"Error: Invalid camera source: {self.input_source}")
+            return
         
         frame_idx = 0
         
@@ -40,9 +52,10 @@ class Streaming(CustomerSegmentationWithYolo):
         
         
         try:
-            self.original_fps = int(cap.get(cv2.CAP_PROP_FSP))
+            self.original_fps = int(cap.get(cv2.CAP_PROP_FPS))
         except Exception as e:
-            print(f"Webcam({self.input_source}) live fps not availalbe, set the fps accoringly. Expection : {e}")
+            print(f"Webcam({self.input_source}) live fps not available, set the fps accordingly. Exception: {e}")
+            
             
         if self.fps:
             if self.fps > self.original_fps:
@@ -56,34 +69,32 @@ class Streaming(CustomerSegmentationWithYolo):
             frame_interval = 1
             
         with pyvirtualcam.Camera(width=width, height=height, fps=self.fps) as cam:
-            print(f"Virtual Camara running at {width}x{height} at {self.fps} fps.")
+            print(f"Virtual Camera running at {width}x{height} at {self.fps} fps.")
             
             while self.running and cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
                     break
                 
+                result_frame = frame  # Default to original frame
+                
                 if frame_idx % frame_interval == 0:
-                    self.model.predict(source=frame, save=False, save_txt=False, stream=False, retina_masks=True, verbose=False, device=self.device)
+                    results = self.model.predict(source=frame, save=False, save_txt=False, stream=False, retina_masks=True, verbose=False, device=self.device)
                     mask = self.generate_mask_from_result(results)
                     
                     if mask is not None:
                         if self.background == "blur":
-                            self.apply_blur_with_mask(frame, mask, blur_strength=self.blur_strength)
+                            result_frame = self.apply_blur_with_mask(frame, mask, blur_strength=self.blur_strength)
                             
                         elif self.background == "none":
                             result_frame = self.apply_black_background(frame, mask)
                             
                         elif self.background == "default":
                             result_frame = self.apply_custom_background(frame, mask)
-                            
-                    ### Process masks and create results:
-                    result_frame = 0
                 
-                frame_idx += 1 
-                    
-            cam.send(cv2.cv2Color(result_frame, cv2.COLOR_BGR2RGB))
-            cam.sleep_until_next_frame()
+                cam.send(cv2.cvtColor(result_frame, cv2.COLOR_BGR2RGB))
+                cam.sleep_until_next_frame()
+                frame_idx += 1
             
         cap.release()
     

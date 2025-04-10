@@ -9,7 +9,10 @@ class CustomerSegmentationWithYolo():
         self.model = YOLO("yolov8m-seg.pt")
         self.erode_size = erode_size
         self.erode_intensity = erode_intensity
-        self.background_image = cv2.imread("static\image.png")
+        # Fix path with forward slashes for better compatibility
+        self.background_image = cv2.imread("static/image.png")
+        if self.background_image is None:
+            print("Warning: Could not load background image. Check the path.")
         
         
     def generate_mask_from_result(self, results):
@@ -33,7 +36,7 @@ class CustomerSegmentationWithYolo():
                     return None
                 
                 # scale for vizualing results:
-                people_mask = torch.any(people_masks, dim=0).to(torch.unit8) * 255
+                people_mask = torch.any(people_masks, dim=0).to(torch.uint8) * 255
                 
                 kernel = np.ones((self.erode_size, self.erode_size), np.uint8)
                 eroded_mask = cv2.erode(people_mask.cpu().numpy(), kernel, iterations=self.erode_intensity)
@@ -66,9 +69,28 @@ class CustomerSegmentationWithYolo():
         return result_frame
     
     def apply_custom_background(self, frame, mask):
+        # Use absolute path to load the background image
+        if self.background_image is None or self.background_image.size == 0:
+            print("Warning: Background image not loaded properly")
+            # Try with absolute path
+            self.background_image = cv2.imread("c:\\Users\\raghu\\OneDrive\\Desktop\\video_broadcaster\\static\\image.png")
+            
+            # If still not loaded, create a solid color background
+            if self.background_image is None or self.background_image.size == 0:
+                print("Creating fallback background")
+                self.background_image = np.ones_like(frame) * 120  # Gray background
+        
+        # Resize background to match frame dimensions
         background_image = cv2.resize(self.background_image, (frame.shape[1], frame.shape[0]))
         
-        # Apply the masks:
-        result_frame = np.where(mask[:, :, np.newaxis] == 255, frame, background_image)
+        # Make sure mask is properly formatted
+        mask_binary = (mask > 128).astype(np.uint8) * 255
+        
+        # Create 3-channel mask for proper blending
+        mask_3d = np.stack([mask_binary, mask_binary, mask_binary], axis=2) / 255.0
+        
+        # Apply the mask using proper blending
+        result_frame = (frame * mask_3d + background_image * (1 - mask_3d)).astype(np.uint8)
+        
         return result_frame
         

@@ -22,24 +22,35 @@ def serve_ui():
 def start_stream(
     source : str = Query("0"),
     fps : int = Query(15),
-    blur_strength : int = Query(21),
+    blur : int = Query(21),
     background : str = Query("none")
 ):
+    global stream_thread
     
-    streaming.update_streaming_config(in_source=None, out_source=None, fps=None, blur_strength=None, background="none")
-    
+    # Check if stream is already running and stop it first
     if streaming.running:
-        return JSONResponse(content={"message" : "Streaming already running."}, status_code=400)
+        streaming.update_running_status(False)
+        if stream_thread and stream_thread.is_alive():
+            stream_thread.join(timeout=1.0)  # Wait for thread to finish
     
+    # Update configuration with new parameters
+    streaming.update_streaming_config(
+        in_source=source,
+        out_source=None, 
+        fps=fps,
+        blur_strength=blur,
+        background=background
+    )
+    
+    # Start new streaming thread
     stream_thread = threading.Thread(
         target=streaming.stream_video,
-        args = ()
-        
+        args=()
     )
     
     stream_thread.start()
     
-    return {"message" : f"Streaming started from source : {fps} FPS and blur strength : {blur_strength}."}
+    return {"message" : f"Streaming started from source: {source} with {fps} FPS and blur strength: {blur}."}
 
 @app.get("/stop")
 def stop_stream():
