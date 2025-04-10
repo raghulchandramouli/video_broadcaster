@@ -18,6 +18,10 @@ class Streaming():
         self.fps = fps
         self.blur_strength = blur_strength
         self.background = background
+        
+        
+    def update_running_status(self, running_status = False):
+        self.running = running_status
     
     def stream_video(self):
         self.running = True

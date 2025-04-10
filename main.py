@@ -2,6 +2,7 @@ import uvicorn
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+import threading
 
 from stream_utils import Streaming
 
@@ -29,8 +30,19 @@ def start_stream(
     if streaming.running:
         return JSONResponse(content={"message" : "Streaming already running."}, status_code=400)
     
-    streaming.stream_video()
-    return
+    stream_thread = threading.Thread(
+        target=streaming.stream_video,
+        args = ()
+        
+    )
+    
+    stream_thread.start()
+    
+    return {"message" : f"Streaming started from source : {fps} FPS and blur strength : {blur_strength}."}
+
+@app.get("/stop")
+def stop_stream():
+    return streaming.update_running_status()
 
 @app.get("/devices")
 def devices():

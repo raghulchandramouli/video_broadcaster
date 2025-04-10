@@ -143,8 +143,16 @@
                 const background = document.getElementById('background').value;
 
                 fetch(`/start?source=${source}&fps=${fps}&blur=${blur}&background=${background}`)
-                
             }
+
+            function stopStream() {
+                fetch('/stop')
+                .then(response = response.json())
+                .then(data => {
+                    document.getElementById('status').innerHTML = data.message;
+                })
+            }
+            
         </script>
     </body>
 
