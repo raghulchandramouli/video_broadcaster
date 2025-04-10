@@ -10,6 +10,7 @@ app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+stream_thread = None
 
 streaming = Streaming()
 
@@ -46,7 +47,6 @@ def stop_stream():
 
 @app.get("/devices")
 def devices():
-    
     return streaming.list_available_devices()
 
 if __name__ == "__main__":

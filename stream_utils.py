@@ -7,7 +7,7 @@ from engine import CustomerSegmentationWithYolo
 class Streaming(CustomerSegmentationWithYolo):
     
     def __init__(self, in_source=None, out_source=None, fps=None, blur_strength=None, background="none"):
-        super().__init__()
+        super().__init__(erode_size=5, erode_intensity=2)
         
         self.input_source = in_source
         self.out_source = out_source
@@ -33,7 +33,7 @@ class Streaming(CustomerSegmentationWithYolo):
         self.running = True
         cap = cv2.VideoCapture(int(self.input_source))
         
-        frmae_idx = 0
+        frame_idx = 0
         
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -80,7 +80,7 @@ class Streaming(CustomerSegmentationWithYolo):
                     ### Process masks and create results:
                     result_frame = 0
                 
-                frmae_idx += 1 
+                frame_idx += 1 
                     
             cam.send(cv2.cv2Color(result_frame, cv2.COLOR_BGR2RGB))
             cam.sleep_until_next_frame()

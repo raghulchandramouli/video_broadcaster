@@ -5,8 +5,10 @@ import torch
 
 class CustomerSegmentationWithYolo():
     
-    def __init__(self):
+    def __init__(self, erode_size=5, erode_intensity=2):
         self.model = YOLO("yolov8m-seg.pt")
+        self.erode_size = erode_size
+        self.erode_intensity = erode_intensity
         self.background_image = cv2.imread("static\image.png")
         
         
@@ -33,7 +35,10 @@ class CustomerSegmentationWithYolo():
                 # scale for vizualing results:
                 people_mask = torch.any(people_masks, dim=0).to(torch.unit8) * 255
                 
-                return people_mask
+                kernel = np.ones((self.erode_size, self.erode_size), np.uint8)
+                eroded_mask = cv2.erode(people_mask.cpu().numpy(), kernel, iterations=self.erode_intensity)
+                
+                return eroded_mask
             
             else:
                 return None
